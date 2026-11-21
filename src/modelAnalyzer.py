@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 import src.constants as const
+import src.utils as utils
 
 
 def build_model_eval_df(
@@ -77,8 +78,8 @@ def display_model_metrics(eval_df: pd.DataFrame) -> dict[str, pd.DataFrame]:
         compute_group_metrics, include_groups=False
     )
     results["overall"] = overall
-    print("\n--- Overall Metrics by model_version ---")
-    print(overall.to_string())
+    paths = utils.save_table_artifacts(overall, const.MODEL_EVAL_OUT_DIR, "overall", index=True)
+    print(f"  -> Saved overall metrics to {paths['csv'].name} and {paths['md'].name}")
 
     if "annotation_status" in eval_df.columns:
         non_review_df = eval_df[eval_df["annotation_status"] != "review"]
@@ -86,8 +87,10 @@ def display_model_metrics(eval_df: pd.DataFrame) -> dict[str, pd.DataFrame]:
             compute_group_metrics, include_groups=False
         )
         results["excluding_review"] = no_review
-        print("\n--- Metrics Excluding annotation_status='review' ---")
-        print(no_review.to_string())
+        paths = utils.save_table_artifacts(
+            no_review, const.MODEL_EVAL_OUT_DIR, "excluding_review", index=True
+        )
+        print(f"  -> Saved review-excluded metrics to {paths['csv'].name} and {paths['md'].name}")
 
     slice_cols = ["vehicle_variant", "visibility", "weather", "road_type"]
     for col in slice_cols:
@@ -96,8 +99,10 @@ def display_model_metrics(eval_df: pd.DataFrame) -> dict[str, pd.DataFrame]:
                 compute_group_metrics, include_groups=False
             )
             results[f"by_{col}"] = sliced
-            print(f"\n--- Metrics by model_version and {col} ---")
-            print(sliced.to_string())
+            paths = utils.save_table_artifacts(
+                sliced, const.MODEL_EVAL_OUT_DIR, f"by_{col}", index=True
+            )
+            print(f"  -> Saved {col} slice metrics to {paths['csv'].name} and {paths['md'].name}")
 
     return results
 
@@ -168,11 +173,10 @@ def model_evaluator(dfs: dict[str, pd.DataFrame]) -> pd.DataFrame:
     misses = find_risk_priority_misses(eval_df)
     if not misses.empty:
         miss_counts = misses.groupby("model_version", dropna=False).size()
-        print("\n--- Risk-Priority Misses Count by model_version ---")
-        print(miss_counts.to_string())
+        print("  -> Risk-priority misses by model_version:", miss_counts.to_dict())
 
         cols_to_show = [
-            c 
+            c
             for c in [
                 "fleet_run_id",
                 "scenario_id",
@@ -186,12 +190,16 @@ def model_evaluator(dfs: dict[str, pd.DataFrame]) -> pd.DataFrame:
                 "annotation_status",
             ]
             if c in misses.columns
-            ]
-        print("\n--- Risk-Priority Missed Detections ---")
-        print(misses[cols_to_show].to_string(index=False))
+        ]
+        paths = utils.save_table_artifacts(
+            misses[cols_to_show],
+            const.MODEL_EVAL_OUT_DIR,
+            "risk_priority_misses",
+            index=False,
+        )
+        print(f"  -> Saved risk-priority misses to {paths['csv'].name} and {paths['md'].name}")
     else:
-        print("\n--- Risk-Priority Misses ---")
-        print("No risk-priority misses found.")
+        print("  -> No risk-priority misses found.")
 
 
     return eval_df

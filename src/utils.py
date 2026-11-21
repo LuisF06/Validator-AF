@@ -1,3 +1,4 @@
+import pandas as pd
 import shutil
 from pathlib import Path
 
@@ -12,6 +13,7 @@ def delete_directory(full_path: str | Path) -> bool:
         return True
         
     return False
+
 
 def validate_files(directory_path: str, required_files: list[str]) -> None:
     """Checks if the csv files to be used are available."""
@@ -37,3 +39,25 @@ def validate_files(directory_path: str, required_files: list[str]) -> None:
         )
 
     print("  -> PASS - Resource files available.")
+
+
+def save_table_artifacts(
+    df: pd.DataFrame,
+    out_dir: Path,
+    stem: str,
+    index: bool = True,
+) -> dict[str, Path]:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    csv_path = out_dir / f"{stem}.csv"
+    md_path = out_dir / f"{stem}.md"
+
+    df.to_csv(csv_path, index=index)
+
+    # to_markdown() works cleanly when 'tabulate' is installed; fall back to plain text if not
+    try:
+        md_content = df.to_markdown(index=index)
+    except ImportError:
+        md_content = f"```\n{df.to_string(index=index)}\n```"
+
+    md_path.write_text(md_content, encoding="utf-8")
+    return {"csv": csv_path, "md": md_path}

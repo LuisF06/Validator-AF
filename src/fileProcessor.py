@@ -3,6 +3,7 @@ import logging
 import pandas as pd
 
 import src.constants as const
+import src.utils as utils
 
 
 def check_key_repeats(df: pd.DataFrame, filename: str) -> None:
@@ -63,10 +64,16 @@ def process_files(
     print(f"  -> Loaded {len(df)} rows and {len(df.columns)} columns.")
     # Check if there are Exact Row Duplicates
     if df.duplicated().any():
-        # Extract ALL copies of the duplicates
         dups = df[df.duplicated(keep=False)]
-        logging.warning("Found %d duplicate rows:\n%s", len(dups), dups.to_string())
-    # Check if there are problems with the Primary keys
+        stem = f"{Path(filename).stem}_exact_duplicates"
+        paths = utils.save_table_artifacts(dups, const.VALIDATION_OUT_DIR, stem, index=True)
+        logging.warning(
+            "[%s] Found %d exact duplicate row(s) -> saved to %s and %s",
+            filename,
+            len(dups),
+            paths["csv"],
+            paths["md"],
+        )
     check_key_repeats(df,filename)
 
     loaded_dfs[filename] = df   

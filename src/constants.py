@@ -12,8 +12,8 @@ REPEATED_KEYS_DIR = OUTPUT_DIR / "repeated_keys"
 PYCACHE_DIR = BASE_DIR / "src/__pycache__"
 
 CLEANUP_DIRS = [
-    REPEATED_KEYS_DIR,
-    PYCACHE_DIR
+    OUTPUT_DIR,
+    PYCACHE_DIR,
 ]
 
 # File and primary key to file relation constants
