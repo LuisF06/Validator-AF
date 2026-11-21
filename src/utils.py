@@ -7,7 +7,7 @@ def delete_directory(full_path: str | Path) -> bool:
     dir_path = Path(full_path)
     
     if dir_path.exists() and dir_path.is_dir():
-        print(f"- Deleting: {dir_path}")
+        print(f"  -> Deleting: {dir_path}")
         shutil.rmtree(dir_path)
         return True
         
@@ -33,7 +33,7 @@ def validate_files(directory_path: str, required_files: list[str]) -> None:
     if missing_files:
         missing_list = ", ".join(missing_files)
         raise FileNotFoundError(
-            f"FAILED - Missing data file(s) in '{target_dir}': {missing_list}"
+            f"  -> FAILED - Missing data file(s) in '{target_dir}': {missing_list}"
         )
 
-    print("PASS - Resource files available.")
+    print("  -> PASS - Resource files available.")
