@@ -1,0 +1,36 @@
+from pathlib import Path
+import pandas as pd
+
+import src.constants as const
+from src.fileProcessor import process_files
+
+def validate_files(directory_path: str, required_files: list[str]) -> None:
+    target_dir = Path(directory_path)
+    print("Checking if Resource files are available.")
+
+    # Verify that the resource directory exists
+    if not target_dir.is_dir():
+        raise FileNotFoundError(f"Error: Resource directory not available -> {target_dir}")
+
+    # Check if there is any data file missing
+    missing_files = [
+        filename for filename in required_files 
+        if not (target_dir / filename).is_file()
+    ]
+
+    # If there are missing files, stop and report
+    if missing_files:
+        missing_list = ", ".join(missing_files)
+        raise FileNotFoundError(
+            f"FAILED - Missing data file(s) in '{target_dir}': {missing_list}"
+        )
+
+    print("PASS - Resource files available.")
+
+
+if __name__ == "__main__":
+    validate_files(const.DATA_DIR, const.REQUIRED_FILES)
+    processed_dfs = process_files(const.DATA_DIR, const.REQUIRED_FILES)
+
+
+    
