@@ -31,21 +31,33 @@ def build_model_eval_df(
 
 
 def compute_group_metrics(group: pd.DataFrame) -> pd.Series:
+    """Computes pedestrian detection and inference latency metrics for a given group.
+
+    Classification metrics are calculated only from records with valid actual
+    and predicted labels. Latency metrics use all available latency records."""
+
+    # Keep only records with both actual and predicted labels available.
     valid = group.dropna(subset=["actual_pedestrian", "predicted_pedestrian"])
     actual = valid["actual_pedestrian"]
     pred = valid["predicted_pedestrian"]
 
+    # Calculate confusion matrix components:
     tp = int(((actual == 1) & (pred == 1)).sum())
     fp = int(((actual == 0) & (pred == 1)).sum())
     fn = int(((actual == 1) & (pred == 0)).sum())
     tn = int(((actual == 0) & (pred == 0)).sum())
 
+    # Precision measures how often pedestrian predictions are correct.
     precision = tp / (tp + fp) if (tp + fp) > 0 else np.nan
+    # Recall measures the proportion of actual pedestrians successfully detected.
     recall = tp / (tp + fn) if (tp + fn) > 0 else np.nan
+    # False Negative Rate (FNR) measures the proportion of actual pedestrians missed.
     fnr = fn / (tp + fn) if (tp + fn) > 0 else np.nan
 
     latencies = group["inference_latency_ms"].dropna()
     p95_latency = float(latencies.quantile(0.95)) if not latencies.empty else np.nan
+    
+    # Check whether P95 latency exceeds the configured latency limit.
     exceeds_latency_gate = (
         bool(p95_latency > const.LATENCY_LIMIT_MS) if pd.notna(p95_latency) else False
     )

@@ -7,6 +7,8 @@ import src.utils as utils
 
 
 def check_key_repeats(df: pd.DataFrame, filename: str) -> None:
+    """Check if there are rows with duplicated values (not exact duplicates)"""
+
     clean_name = Path(filename).name
     keys = const.JOIN_KEYS.get(clean_name)
     if not keys:
@@ -51,7 +53,7 @@ def process_files(
   """ Imports CSV files into Data Frames, 
   checks for duplicates and removes data that can be ommited.
 
-  Returns a dictionary of filename, DataFrame
+  Returns a dictionary of {filename: DataFrame}
   """
   folder = Path(data_dir)
   loaded_dfs = {}
@@ -67,13 +69,7 @@ def process_files(
         dups = df[df.duplicated(keep=False)]
         stem = f"{Path(filename).stem}_exact_duplicates"
         paths = utils.save_table_artifacts(dups, const.VALIDATION_OUT_DIR, stem, index=True)
-        logging.warning(
-            "[%s] Found %d exact duplicate row(s) -> saved to %s and %s",
-            filename,
-            len(dups),
-            paths["csv"],
-            paths["md"],
-        )
+        print(f"  -> Found {len(dups)} exact duplicate row(s) -> saved to {paths["csv"]}")
     check_key_repeats(df,filename)
 
     loaded_dfs[filename] = df   
